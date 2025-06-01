@@ -1,5 +1,7 @@
-/// Interface representing `HelloContract`.
-/// This interface allows modification and retrieval of the contract balance.
+// / Interface representing `HelloContract`.
+// / This interface allows modification and retrieval of the contract balance.
+pub mod healthcare_registration;
+
 #[starknet::interface]
 pub trait IHelloStarknet<TContractState> {
     /// Increase contract balance.
