@@ -28,14 +28,16 @@ pub trait IInstitutionRegistry<TContractState> {
         wallet: ContractAddress,
         name: ByteArray,
         license_id: ByteArray,
-        metadata: ByteArray
+        metadata: ByteArray,
     );
 
     /// Retrieves the stored data for a healthcare institution.
     fn get_institution(self: @TContractState, wallet: ContractAddress) -> InstitutionData;
 
     /// Updates the metadata for an already registered institution.
-    fn update_institution(ref self: TContractState, wallet: ContractAddress, new_metadata: ByteArray);
+    fn update_institution(
+        ref self: TContractState, wallet: ContractAddress, new_metadata: ByteArray,
+    );
 
     /// Flags or verifies an institution's credentials.
     fn verify_institution(ref self: TContractState, wallet: ContractAddress);
@@ -50,10 +52,9 @@ pub trait IInstitutionRegistry<TContractState> {
 // Define the contract module
 #[starknet::contract]
 pub mod InstitutionRegistry {
-    use super::{InstitutionData, RegistryErrors};
-    use starknet::ContractAddress;
     use starknet::storage::*;
-    use starknet::get_caller_address;
+    use starknet::{ContractAddress, get_caller_address};
+    use super::{InstitutionData, RegistryErrors};
 
     // Define storage variables
     #[storage]
@@ -79,9 +80,8 @@ pub mod InstitutionRegistry {
             wallet: ContractAddress,
             name: ByteArray,
             license_id: ByteArray,
-            metadata: ByteArray
+            metadata: ByteArray,
         ) {
-
             // Check: Ensure the institution is not already registered
             let existing_data = self.institutions.read(wallet);
             assert(!existing_data.is_registered, RegistryErrors::INSTITUTION_ALREADY_REGISTERED);
@@ -107,7 +107,7 @@ pub mod InstitutionRegistry {
 
         // Updates the metadata for an already registered institution
         fn update_institution(
-            ref self: ContractState, wallet: ContractAddress, new_metadata: ByteArray
+            ref self: ContractState, wallet: ContractAddress, new_metadata: ByteArray,
         ) {
             // Read the existing institution data
             let mut institution_data = self.institutions.read(wallet);
@@ -143,7 +143,7 @@ pub mod InstitutionRegistry {
             let caller = get_caller_address();
             let current_authority = self.authority.read();
             // Corrected assert usage for felt252 error code
-            assert(caller == current_authority, RegistryErrors::NOT_AUTHORIZED); 
+            assert(caller == current_authority, RegistryErrors::NOT_AUTHORIZED);
 
             // Effects: Update the authority storage variable
             self.authority.write(new_authority); // [7]

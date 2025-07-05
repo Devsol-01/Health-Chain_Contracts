@@ -1,12 +1,12 @@
+use health_chain_contracts::healthcare_registration::{
+    IInstitutionRegistryDispatcher, IInstitutionRegistryDispatcherTrait,
+    IInstitutionRegistrySafeDispatcher, IInstitutionRegistrySafeDispatcherTrait,
+};
+use snforge_std::{
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
+    stop_cheat_caller_address,
+};
 use starknet::ContractAddress;
-
-use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
-use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
-
-use health_chain_contracts::healthcare_registration::IInstitutionRegistrySafeDispatcher;
-use health_chain_contracts::healthcare_registration::IInstitutionRegistrySafeDispatcherTrait;
-use health_chain_contracts::healthcare_registration::IInstitutionRegistryDispatcher;
-use health_chain_contracts::healthcare_registration::IInstitutionRegistryDispatcherTrait;
 
 fn deploy_contract(name: ByteArray) -> ContractAddress {
     let contract = declare(name).unwrap().contract_class();
@@ -14,9 +14,13 @@ fn deploy_contract(name: ByteArray) -> ContractAddress {
     contract_address
 }
 
-fn deploy_institution_registry(initial_authority: ContractAddress) -> IInstitutionRegistryDispatcher {
+fn deploy_institution_registry(
+    initial_authority: ContractAddress,
+) -> IInstitutionRegistryDispatcher {
     let contract = declare("InstitutionRegistry");
-    let mut constructor_calldata = array![initial_authority.into()]; // Pass authority to constructor [2]
+    let mut constructor_calldata = array![
+        initial_authority.into(),
+    ]; // Pass authority to constructor [2]
     let (contract_address, _err) = contract
         .unwrap()
         .contract_class()
@@ -32,11 +36,14 @@ fn test_register_institution() {
 
     // Define test data
     let institution_wallet: ContractAddress = 123.try_into().unwrap();
-    let name = "MyHospital"; 
-    let license_id = "LIC123"; 
-    let metadata = "some metadata"; 
+    let name = "MyHospital";
+    let license_id = "LIC123";
+    let metadata = "some metadata";
 
-    dispatcher.register_institution(institution_wallet.clone(), name.clone(), license_id.clone(), metadata.clone());
+    dispatcher
+        .register_institution(
+            institution_wallet.clone(), name.clone(), license_id.clone(), metadata.clone(),
+        );
 
     // Retrieve the data
     let stored_data = dispatcher.get_institution(institution_wallet);
@@ -73,7 +80,10 @@ fn test_update_institution_metadata() {
     let initial_metadata = "initial metadata";
     let new_metadata = "updated metadata";
 
-    dispatcher.register_institution(institution_wallet, name.clone(), license_id.clone(), initial_metadata.clone());
+    dispatcher
+        .register_institution(
+            institution_wallet, name.clone(), license_id.clone(), initial_metadata.clone(),
+        );
 
     dispatcher.update_institution(institution_wallet, new_metadata.clone());
 
@@ -97,14 +107,19 @@ fn test_register_institution_duplicate() {
     let metadata = "some metadata";
 
     // Register the institution the first time (should succeed)
-    dispatcher.register_institution(institution_wallet.clone(), name.clone(), license_id.clone(), metadata.clone());
+    dispatcher
+        .register_institution(
+            institution_wallet.clone(), name.clone(), license_id.clone(), metadata.clone(),
+        );
 
     // Attempt to register the same institution again (should panic)
     dispatcher.register_institution(institution_wallet, name, license_id, metadata);
 }
 
 #[test]
-#[should_panic(expected: 'InstitutionNotRegistered')] // Expect a panic if institution not registered [3]
+#[should_panic(
+    expected: 'InstitutionNotRegistered',
+)] // Expect a panic if institution not registered [3]
 fn test_update_institution_metadata_not_registered() {
     let initial_authority: ContractAddress = 1000.try_into().unwrap();
     let dispatcher = deploy_institution_registry(initial_authority);
@@ -117,7 +132,9 @@ fn test_update_institution_metadata_not_registered() {
 }
 
 #[test]
-#[should_panic(expected: 'InstitutionNotRegistered')] // Expect a panic if institution not registered [3]
+#[should_panic(
+    expected: 'InstitutionNotRegistered',
+)] // Expect a panic if institution not registered [3]
 fn test_verify_institution_not_registered() {
     let initial_authority: ContractAddress = 1000.try_into().unwrap();
     let dispatcher = deploy_institution_registry(initial_authority);
@@ -150,7 +167,7 @@ fn test_verify_institution_unauthorized() {
 
     let unauthorized_caller: ContractAddress = 999.try_into().unwrap();
 
-    // Cheat the caller address to be unauthorized 
+    // Cheat the caller address to be unauthorized
     start_cheat_caller_address(dispatcher.contract_address, unauthorized_caller);
 
     // Attempt to verify the institution as an unauthorized caller (should panic)
